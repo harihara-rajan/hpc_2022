@@ -8,6 +8,7 @@ void show_vector(vector<int> A, int n);
 vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n);
 vector<vector<float>> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec, vector<vector<float>> r, int n);
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n);
+vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d) ; // returns matrix of nxn
 int main()
 {
     int n = 3;
@@ -70,11 +71,12 @@ vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n_links)
 {
     int n = L.size();
+    vector<int> d(n)
     for (int i = 0; i<n ; i++)
     {
         for (int j=0; j<n; j++)
         {
-            Q[i][j] = (1/float(n_links[j])) * L[i][j];
+            Q[i][j] = (1/float(n_links[j])) * L[i][j];  
         }
     }
     return Q;
@@ -91,3 +93,22 @@ vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<f
     }
     return r;
 }
+
+vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links)  // returns matrix of nxn
+{
+    int n = e.size()
+    vector<vector<int>> ed_matrix(n, vector<int>(n))
+    for (int i = 0; i < n; i++)
+    {
+        e[i] = 1
+        if (n_links[i]==0)
+        {
+            d[i] = 1;
+        }
+        else
+        {
+            d[i] = 0;
+        }
+    }
+}
+
