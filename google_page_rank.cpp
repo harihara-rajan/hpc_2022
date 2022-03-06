@@ -6,10 +6,10 @@ main file*/
 void show_matrix(vector<vector<int>> matrix, int n);
 void show_vector(vector<int> A, int n);
 vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n);
-vector<vector<float>> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec, vector<vector<float>> r, int n);
+vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r,vector<float> q, int n);
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n);
 vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links) ; // returns matrix of nxn
-vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r);
+vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r, int num_power_iteration);
 float f_compute_l1_norm(vector<float> q);
 
 int main()
@@ -85,16 +85,16 @@ vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<flo
     return Q;
 }
 
-vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec,vector<float> r, int n)
+vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r,vector<float> q, int n)
 {
     for (int i=0; i<n; i++)
     {
         for (int j=0; j<n; j++)
         {
-            r[i] += mat[i][j] * vec[j];
+            q[i] += mat[i][j] * r[j];
         }
     }
-    return r;
+    return q;
 }
 
 vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links)  // returns matrix of nxn
@@ -144,4 +144,19 @@ float f_compute_l1_norm(vector<float> q)
     }
 
     return l1_norm; 
+}
+vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r, int num_power_iteration)
+{
+    int n = r.size();
+    vector<float>q (r.size());
+    for (int i=0; i<num_power_iteration; i++)
+    {
+        vector<float> q = f_matrix_vector_multiplication(P_matrix, r,q,n);
+        for (int j=0; j<n; j++)
+        {
+            r[j] = 1/(f_compute_l1_norm(q)) * (q[j]);
+        }
+    }
+    return r;
+
 }
