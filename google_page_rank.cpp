@@ -8,7 +8,8 @@ void show_vector(vector<int> A, int n);
 vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n);
 vector<vector<float>> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec, vector<vector<float>> r, int n);
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n);
-vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d) ; // returns matrix of nxn
+vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links) ; // returns matrix of nxn
+
 int main()
 {
     int n = 3;
@@ -33,7 +34,7 @@ int main()
 
 }
 
-void show_matrix(vector<vector<float>> matrix, int n)
+void show_matrix(vector<vector<int>> matrix, int n)
 {
 
     for (int i=0; i<n ; i++)
@@ -71,7 +72,7 @@ vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n_links)
 {
     int n = L.size();
-    vector<int> d(n)
+
     for (int i = 0; i<n ; i++)
     {
         for (int j=0; j<n; j++)
@@ -96,11 +97,11 @@ vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<f
 
 vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links)  // returns matrix of nxn
 {
-    int n = e.size()
-    vector<vector<int>> ed_matrix(n, vector<int>(n))
+    int n = e.size();
+    vector<vector<float>> ed_matrix(n, vector<float>(n));
     for (int i = 0; i < n; i++)
     {
-        e[i] = 1
+        e[i] = 1;
         if (n_links[i]==0)
         {
             d[i] = 1;
@@ -110,5 +111,14 @@ vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, v
             d[i] = 0;
         }
     }
-}
 
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            ed_matrix[i][j] = 1/float(n) * (e[i] * d [j]);
+        }
+
+    }
+    return ed_matrix;
+}
