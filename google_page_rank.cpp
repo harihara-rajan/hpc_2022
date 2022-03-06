@@ -4,21 +4,25 @@ using namespace std;
 /* header files at the end move all these function to a header file and include the header file in this 
 main file*/
 void show_matrix(vector<vector<int>> matrix, int n);
-void show_vector(vector<int> A, int n);
+void show_vector(vector<float> A, int n);
 vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n);
-vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r,vector<float> q, int n);
+vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r, int n);
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n);
 vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links) ; // returns matrix of nxn
 vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r, int num_power_iteration);
 float f_compute_l1_norm(vector<float> q);
+vector<float> f_vector_normalising(vector<float>q, float l1_norm);
 
 int main()
 {
-    int n = 3;
+    int n = 10;
+    int num_power_iteration = 30;
     vector<vector<int>> matrix(n, vector<int>(n)); // matrix 
     vector<vector<float>> Q(n, vector<float>(n));
+    vector<vector<float>> P(n, vector<float>(n));
     vector<int> n_links(n);
-    vector<int> r (n);
+    vector<float> r (n);
+    vector<float> r_f (n);
     vector<int> e (n);
     vector<int> d (n);
     /* Generating random L matrix*/
@@ -28,12 +32,29 @@ int main()
         {
             matrix[i][j] = rand() % 2 ;
         }
+        r[i] =((double) rand() / (RAND_MAX)) ;
     }
-    show_matrix(matrix, n);
+    // matrix = {{0,1,0},{1,0,0},{0,1,0}};
     n_links = f_get_n_links(n_links, matrix, n);
-    show_vector(n_links, n);
     Q = f_compute_Q_matrix(matrix, Q, n_links);
 
+    P = f_compute_P_matrix(Q, e, d, n_links);
+        for (int i=0; i<n ; i++)
+    {
+        for (int j=0; j<n; j++)
+        {
+            cout <<P[i][j] << "  ";
+        }
+        cout << endl;
+    }
+
+    r_f = f_power_iteration(P, r, num_power_iteration);
+
+    for (int i=0; i<n; i++)
+    {
+        cout << r_f[i] << " ";
+    }
+    cout<< endl;
 }
 
 void show_matrix(vector<vector<int>> matrix, int n)
@@ -49,7 +70,7 @@ void show_matrix(vector<vector<int>> matrix, int n)
     }
 }
 
-void show_vector(vector<int>A, int n)
+void show_vector(vector<float>A, int n)
 {
     
     for (int i=0; i<n; i++)
@@ -79,22 +100,31 @@ vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<flo
     {
         for (int j=0; j<n; j++)
         {
-            Q[i][j] = (1/float(n_links[j])) * L[i][j];  
+            if (n_links[j] == 0)
+            {
+                Q[i][j] = L[i][j]; 
+            }
+            else
+            {
+                Q[i][j] = (1/float(n_links[j])) * L[i][j];  
+            }
         }
     }
     return Q;
 }
 
-vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r,vector<float> q, int n)
+vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> r, int n)
 {
+    vector<float> res(n); 
+
     for (int i=0; i<n; i++)
     {
         for (int j=0; j<n; j++)
         {
-            q[i] += mat[i][j] * r[j];
+            res[i] += mat[i][j] * r[j];
         }
     }
-    return q;
+    return res;
 }
 
 vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, vector<int>d, vector<int> n_links)  // returns matrix of nxn
@@ -148,15 +178,25 @@ float f_compute_l1_norm(vector<float> q)
 vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r, int num_power_iteration)
 {
     int n = r.size();
+    float l1_norm;
     vector<float>q (r.size());
+    vector<float> r_new(n);
     for (int i=0; i<num_power_iteration; i++)
     {
-        vector<float> q = f_matrix_vector_multiplication(P_matrix, r,q,n);
-        for (int j=0; j<n; j++)
-        {
-            r[j] = 1/(f_compute_l1_norm(q)) * (q[j]);
-        }
+        q = f_matrix_vector_multiplication(P_matrix, r,n);
+        l1_norm = f_compute_l1_norm(q);
+        r_new = f_vector_normalising(q, l1_norm);
+        r = r_new;
     }
     return r;
-
+}
+vector<float> f_vector_normalising(vector<float>q, float l1_norm)
+{
+    int n = q.size();
+    vector<float> r_new(n);
+    for (int i=0; i<n; i++)
+    {
+        r_new[i] = q[i]/l1_norm;
+    }
+    return r_new;
 }
