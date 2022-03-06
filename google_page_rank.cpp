@@ -99,6 +99,7 @@ vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, v
 {
     int n = e.size();
     vector<vector<float>> ed_matrix(n, vector<float>(n));
+    vector<vector<float>> P_matrix(n, vector<float>(n));
     for (int i = 0; i < n; i++)
     {
         e[i] = 1;
@@ -120,5 +121,13 @@ vector<vector<float>> f_compute_P_matrix(vector<vector<float>>Q, vector<int>e, v
         }
 
     }
-    return ed_matrix;
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < n; j++)
+        {
+            P_matrix[i][j] = Q[i][j] + ed_matrix[i][j];
+        }
+    }
+    // P_matrix = Q + ed_matrix;
+    return P_matrix;
 }
