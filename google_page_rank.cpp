@@ -15,6 +15,8 @@ int main()
     vector<vector<float>> Q(n, vector<float>(n));
     vector<int> n_links(n);
     vector<int> r (n);
+    vector<int> e (n);
+    vector<int> d (n);
     /* Generating random L matrix*/
     for (int i=0; i<n ; i++)
     {
@@ -27,17 +29,10 @@ int main()
     n_links = f_get_n_links(n_links, matrix, n);
     show_vector(n_links, n);
     Q = f_compute_Q_matrix(matrix, Q, n_links);
-        for (int i = 0; i <n ; i++)
-    {
-        for (int j=0; j<n; j++)
-        {
-            cout << Q[i][j] << " " ; 
-        }
-        cout << endl;
-    }   
+
 }
 
-void show_matrix(vector<vector<int>> matrix, int n)
+void show_matrix(vector<vector<float>> matrix, int n)
 {
 
     for (int i=0; i<n ; i++)
