@@ -1,10 +1,12 @@
 #include <iostream>
 #include <vector>
 using namespace std; 
-
+/* header files at the end move all these function to a header file and include the header file in this 
+main file*/
 void show_matrix(vector<vector<int>> matrix, int n);
 void show_vector(vector<int> A, int n);
 vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n);
+vector<vector<float>> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec, vector<vector<float>> r, int n);
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n);
 int main()
 {
@@ -12,7 +14,7 @@ int main()
     vector<vector<int>> matrix(n, vector<int>(n)); // matrix 
     vector<vector<float>> Q(n, vector<float>(n));
     vector<int> n_links(n);
-
+    vector<int> r (n);
     /* Generating random L matrix*/
     for (int i=0; i<n ; i++)
     {
@@ -25,7 +27,6 @@ int main()
     n_links = f_get_n_links(n_links, matrix, n);
     show_vector(n_links, n);
     Q = f_compute_Q_matrix(matrix, Q, n_links);
-
         for (int i = 0; i <n ; i++)
     {
         for (int j=0; j<n; j++)
@@ -74,7 +75,7 @@ vector<int> f_get_n_links(vector<int> n_links, vector<vector<int>> matrix, int n
 vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<float>>Q, vector<int> n_links)
 {
     int n = L.size();
-    for (int i = 0; i <n ; i++)
+    for (int i = 0; i<n ; i++)
     {
         for (int j=0; j<n; j++)
         {
@@ -82,4 +83,16 @@ vector<vector<float>> f_compute_Q_matrix(vector<vector<int>>L, vector<vector<flo
         }
     }
     return Q;
+}
+
+vector<float> f_matrix_vector_multiplication(vector<vector<float>> mat, vector<float> vec,vector<float> r, int n)
+{
+    for (int i=0; i<n; i++)
+    {
+        for (int j=0; j<n; j++)
+        {
+            r[i] += mat[i][j] * vec[j];
+        }
+    }
+    return r;
 }
