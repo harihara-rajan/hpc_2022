@@ -10,7 +10,6 @@ int main ( int argc, char *argv[] )
    int n = 12;
    int np = 4; 
    int chunks = n/np;
-   // vector<long double> q(n, 1.432);
    long double q[n] = {0.1,0.1,0.1,0.2,0.2,0.2,0.3,0.3,0.3,0.4,0.4,0.4};
    long double to_sum[chunks]; 
    long double sums[np] = {0};
