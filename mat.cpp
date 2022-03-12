@@ -32,6 +32,7 @@ int main ( int argc, char *argv[] )
     int L [n][n]= {0}; 
     int L_sub [chunks][n] = {0};
     int n_links[n] = {0};
+    int n_links_total[n] = {0};
     int end_process = (n_actual / chunks) ;
     int rows_end_process = n_actual % chunks;
 
@@ -84,72 +85,29 @@ int main ( int argc, char *argv[] )
             cout << endl ;
         }
     }
+    cout << endl;
 
+    // computing n vectors parallely 
     MPI_Scatter(L, n*chunks, MPI_INT, L_sub, n*chunks, MPI_INT, 0, MPI_COMM_WORLD);
     
     for (i=0; i<chunks; i++)
     {
-        for (j=0; j<n_actual; j++)
+        for (j=0; j<n; j++)
         {
             n_links [j] += L_sub[i][j];
         }
     }
 
-    if (rank ==0)
+    MPI_Reduce(& n_links, n_links_total, n, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+
+    if (rank==0)
     {
-        cout << "Rank = " << rank << endl;
         for (i=0; i<n_actual; i++)
         {
-            cout << n_links[i] << " ";
+            cout << n_links_total[i] << " ";
         }
         cout << endl;
     }
-    cout << endl;
-    if (rank ==1)
-    {
-        cout << "Rank = " << rank << endl;
-        for (i=0; i<n_actual; i++)
-        {
-            cout << n_links[i] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-
-    if (rank ==2)
-    {
-        cout << "Rank = " << rank << endl;
-        for (i=0; i<n_actual; i++)
-        {
-            cout << n_links[i] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-
-    if (rank ==3)
-    {
-        cout << "Rank = " << rank << endl;;
-        for (i=0; i<n_actual; i++)
-        {
-            cout << n_links[i] << " ";
-        }
-        cout << endl;
-    }
-    cout << endl;
-
-
-
-    MPI_Gather(&n_links, n, MPI_INT, n_links, n,MPI_INT, 0, MPI_COMM_WORLD);
-
-    // if (rank ==0)
-    // {
-    //     for (i=0; i<n_actual; i++)
-    //     {
-    //         cout << n_links[i] << " ";
-    //     }
-    //     cout << endl;
-    // }
 
 
 
