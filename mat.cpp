@@ -8,7 +8,7 @@ using namespace std;
 int main ( int argc, char *argv[] )
 {
 	time_t walltime = time(nullptr);
-    // srand(time(NULL));
+    srand(time(NULL));
 
 
     int n_actual = 5;
@@ -33,9 +33,12 @@ int main ( int argc, char *argv[] )
     int L_sub [chunks][n] = {0};
     int n_links[n] = {0};
     int n_links_total[n] = {0};
+    int n_links_total_sub [n]= {0};
     int end_process = (n_actual / chunks) ;
     int rows_end_process = n_actual % chunks;
     int e[n];
+    int d[n];
+    int d_sub[n];
     int e_sub[chunks];
 
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
@@ -106,7 +109,6 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
-    // cout << endl;
     /* Initialize e parallely*/
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -127,7 +129,36 @@ int main ( int argc, char *argv[] )
         cout << endl;
     }
 
+    /* initialise d vector parallely using gather and scatter*/
+    MPI_Scatter(&n_links_total, chunks, MPI_INT, n_links_total_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(&d, chunks, MPI_INT, d_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
 
-        MPI_Finalize();
+    for (i=0; i<chunks; i++)
+    {
+        if (n_links_total_sub[i] == 0)
+        {
+            d_sub[i] = 1;
+        }
+        else
+        {
+            d_sub[i]=0;
+        }
+    }
+
+    MPI_Gather(& d_sub, chunks, MPI_INT, d, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank==0)
+    {
+        cout << "d vector " << endl;
+        for (i=0; i<n_actual; i++)
+        {
+            cout << d[i] << " ";
+        }
+        cout << endl;
+    }
+
+
+
+    MPI_Finalize();
 
 }
