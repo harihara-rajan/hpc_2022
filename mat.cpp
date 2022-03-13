@@ -8,7 +8,7 @@ using namespace std;
 int main ( int argc, char *argv[] )
 {
 	time_t walltime = time(nullptr);
-    srand(time(NULL));
+    // srand(time(NULL));
 
 
     int n_actual = 5;
@@ -42,6 +42,10 @@ int main ( int argc, char *argv[] )
     int ed_matrix_sub[chunks][n];
     int d_sub[n];
     int e_sub[chunks];
+    float Q [n][n];
+    float Q_sub[chunks][n];
+
+
 
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -100,7 +104,7 @@ int main ( int argc, char *argv[] )
         }
     }
 
-    MPI_Reduce(& n_links, n_links_total, n, MPI_INT, MPI_SUM, 0, MPI_COMM_WORLD );
+    MPI_Allreduce(& n_links, n_links_total, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
 
     if (rank==0)
     {
@@ -187,6 +191,47 @@ int main ( int argc, char *argv[] )
             cout << endl;
         }
     }
+
+    /* parallelise Q matrix */
+    MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(&n_links_total, chunks, MPI_INT, n_links_total_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+
+
+    for (i=0; i<chunks; i++)
+    {
+        for (j=0; j<n; j++)
+        {
+            if (n_links_total[j] == 0)
+            {
+                Q_sub[i][j] =  L_sub[i][j];
+            }
+            else
+            {
+                Q_sub[i][j] = (1/float(n_links_total[j])) * L_sub[i][j] ;
+            }
+        }
+    }
+
+    MPI_Gather(&Q_sub, chunks*n, MPI_FLOAT, Q, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+
+    if (rank == 0)
+    {
+        cout << "Q Matrix" << endl;
+        for (i=0; i<n_actual; i++)
+        {
+            for (j=0; j<n_actual; j++)
+            {
+                cout << Q[i][j] << "   ";
+            }
+            cout << endl;
+        }
+    }
+
+    /* ADD Q and ed Matrix*/
+
+
 
     MPI_Finalize();
 
