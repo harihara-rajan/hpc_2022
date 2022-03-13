@@ -35,6 +35,8 @@ int main ( int argc, char *argv[] )
     int n_links_total[n] = {0};
     int end_process = (n_actual / chunks) ;
     int rows_end_process = n_actual % chunks;
+    int e[n];
+    int e_sub[chunks];
 
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -70,6 +72,7 @@ int main ( int argc, char *argv[] )
 
     if (rank == 0)
     {
+        cout << "L Matrix " << endl;
         for (int i=0; i<n_actual; i++)
         {
             for (int j=0; j<n_actual; j++)
@@ -96,13 +99,33 @@ int main ( int argc, char *argv[] )
 
     if (rank==0)
     {
+        cout << "n_links " << endl;
         for (i=0; i<n_actual; i++)
         {
             cout << n_links_total[i] << " ";
         }
         cout << endl;
     }
+    // cout << endl;
+    /* Initialize e parallely*/
+    MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
 
+    for (i=0; i<chunks; i++)
+    {
+        e_sub[i] = 1;
+    }
+
+    MPI_Gather(&e_sub, chunks, MPI_INT, e, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank==0)
+    {
+        cout << "e vector " << endl;
+        for(i=0; i<n_actual; i++)
+        {
+            cout << e[i] << " ";
+        }
+        cout << endl;
+    }
 
 
         MPI_Finalize();
