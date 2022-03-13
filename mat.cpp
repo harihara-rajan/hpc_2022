@@ -38,6 +38,8 @@ int main ( int argc, char *argv[] )
     int rows_end_process = n_actual % chunks;
     int e[n];
     int d[n];
+    int ed_matrix[n][n];
+    int ed_matrix_sub[chunks][n];
     int d_sub[n];
     int e_sub[chunks];
 
@@ -157,7 +159,34 @@ int main ( int argc, char *argv[] )
         cout << endl;
     }
 
+    /*outer prodct of e and d vector parallel implementation*/
 
+    MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(&d, chunks, MPI_INT, d_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(&ed_matrix, chunks*n, MPI_INT, ed_matrix_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+
+    for (i=0; i<chunks; i++)
+    {
+        for (j=0; j<n_actual; j++)
+        {
+            ed_matrix_sub[i][j] = e_sub[i] * d_sub[i];
+        }
+    }
+
+    MPI_Gather(&ed_matrix_sub, chunks*n, MPI_INT, ed_matrix, n*chunks, MPI_INT, 0, MPI_COMM_WORLD);
+
+    if (rank ==0)
+    {
+        cout << "ed Matrix" << endl;
+        for (i=0; i<n_actual; i++)
+        {
+            for (j=0; j<n_actual; j++)
+            {
+                cout << ed_matrix[j][i] << " " ;
+            }
+            cout << endl;
+        }
+    }
 
     MPI_Finalize();
 
