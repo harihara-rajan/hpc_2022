@@ -8,7 +8,7 @@ using namespace std;
 int main ( int argc, char *argv[] )
 {
 	time_t walltime = time(nullptr);
-    // srand(time(NULL));
+    srand(time(NULL));
 
 
     int n_actual = 5;
@@ -44,6 +44,8 @@ int main ( int argc, char *argv[] )
     int e_sub[chunks];
     float Q [n][n];
     float Q_sub[chunks][n];
+    float P [n][n];
+    float P_sub[chunks][n];
 
 
 
@@ -115,6 +117,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
+    cout << endl;
     /* Initialize e parallely*/
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
 
@@ -134,7 +137,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
-
+    cout << endl ;
     /* initialise d vector parallely using gather and scatter*/
     MPI_Scatter(&n_links_total, chunks, MPI_INT, n_links_total_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Scatter(&d, chunks, MPI_INT, d_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -163,6 +166,7 @@ int main ( int argc, char *argv[] )
         cout << endl;
     }
 
+    cout << endl;
     /*outer prodct of e and d vector parallel implementation*/
 
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -178,7 +182,7 @@ int main ( int argc, char *argv[] )
     }
 
     MPI_Gather(&ed_matrix_sub, chunks*n, MPI_INT, ed_matrix, n*chunks, MPI_INT, 0, MPI_COMM_WORLD);
-
+    MPI_Bcast(&ed_matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD);
     if (rank ==0)
     {
         cout << "ed Matrix" << endl;
@@ -191,6 +195,7 @@ int main ( int argc, char *argv[] )
             cout << endl;
         }
     }
+    cout << endl;
 
     /* parallelise Q matrix */
     MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -223,15 +228,41 @@ int main ( int argc, char *argv[] )
         {
             for (j=0; j<n_actual; j++)
             {
-                cout << Q[i][j] << "   ";
+                cout << Q[i][j] << "            ";
             }
             cout << endl;
         }
     }
+    cout << endl;
 
-    /* ADD Q and ed Matrix*/
+    /* P matrix implimentation parallely */
+    MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(ed_matrix, chunks*n, MPI_INT, ed_matrix_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
 
+    for(i=0; i<chunks; i++)
+    {
+        for (j=0; j<n; j++)
+        {
+            P_sub[i][j] = Q_sub[i][j] + ed_matrix_sub[i][j];
+        }
+    }
+    cout << endl;
+    MPI_Gather(&P_sub, chunks*n, MPI_FLOAT, P, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    if (rank==0)
+    {
+        cout << "P Matrix"<< endl;
+        for (i=0; i<n_actual; i++)
+        {
+            for (j=0; j<n_actual; j++)
+            {
+                cout << P[i][j] <<  "            ";
+            }
+            cout << endl;
+        }
+    }
 
     MPI_Finalize();
 
