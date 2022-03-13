@@ -8,7 +8,7 @@ using namespace std;
 int main ( int argc, char *argv[] )
 {
 	time_t walltime = time(nullptr);
-    srand(time(NULL));
+    // srand(time(NULL));
 
 
     int n_actual = 5;
@@ -46,6 +46,9 @@ int main ( int argc, char *argv[] )
     float Q_sub[chunks][n];
     float P [n][n];
     float P_sub[chunks][n];
+    float res[n]={0};
+    float res_sub[chunks] = {0};
+    float vector [n] = {0};
 
 
 
@@ -256,7 +259,7 @@ int main ( int argc, char *argv[] )
         cout << "P Matrix"<< endl;
         for (i=0; i<n_actual; i++)
         {
-            for (j=0; j<n_actual; j++)
+            for (j=0; j<n; j++)
             {
                 cout << P[i][j] <<  "            ";
             }
@@ -264,6 +267,66 @@ int main ( int argc, char *argv[] )
         }
     }
 
+    for(i=0; i<n; i++)
+    {
+        if (i<n)
+        {
+            vector[i] = 1/float(n_actual);
+        }
+        else
+        {
+            vector[i] = 0;
+        }
+    }
+
+    MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD );
+    MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
+
+    for (int i=0; i<chunks; i++) // 1 should be replaced with chunks in original programming
+    {
+        for (int j=0; j<n_actual;j++)
+        {
+            res_sub[i] += P_sub[i][j] * vector[j];
+        }
+    }
+    
+    // if (rank==0)
+    // {
+    //     for (int i=0; i<chunks; i++)
+    //     {
+    //         for (int j=0; j<n_actual;j++)
+    //         {
+    //             cout << P[i][j] << "       ";
+    //         }
+    //         cout << endl;
+    //     }
+    //     cout << endl; 
+
+    //     for (int i=0; i<chunks; i++)
+    //     {
+    //         for (int j=0; j<n_actual;j++)
+    //         {
+    //             res_sub[i] += P[i][j] * res[j]; 
+    //             cout << rP[i][j] << " * " << res[j] << " = " << 
+    //         }
+    //     }
+    //     cout << endl;
+    
+    // }    
+    // cout << endl;
+
+    MPI_Gather(&res_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
+    
+    if (rank ==0)
+    {
+        cout << "R vector" << endl;
+        for (int j=0; j<n;j++)
+        {
+            cout << res[j] << " "; 
+        }
+
+    }
+    cout << endl; 
     MPI_Finalize();
 
 }
