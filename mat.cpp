@@ -36,12 +36,6 @@ int main ( int argc, char *argv[] )
     int end_process = (n_actual / chunks) ;
     int rows_end_process = n_actual % chunks;
 
-    if  (rank==0)
-    {
-        cout << "End process : " << end_process << endl;
-        cout << "Rows end    : "  << rows_end_process << endl;
-    }
-
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
 
     for (int i=0; i<chunks; i++)
