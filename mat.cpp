@@ -299,7 +299,11 @@ int main ( int argc, char *argv[] )
     MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Scatter(ed_matrix, chunks*n, MPI_INT, ed_matrix_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
+    /*
+    P = Q + ed_matrix, for which P and ed_matrix of shape [n][n] is scattered to Q_sub and ed_matrix_sub
+    of shape [chunks][n]. every process will have chunks of Q and ed matrix which will be summed. At the end
+    using Gather operation every summed chunks of P matrix i.e. P_sub is gather to P matrix , 
+    */
 
     for(i=0; i<chunks; i++)
     {
@@ -324,6 +328,7 @@ int main ( int argc, char *argv[] )
     cout << endl;
     }
 
+    // initialising rank vector (serial programming)
     for(i=0; i<n; i++)
     {
         if (i<n_actual)
