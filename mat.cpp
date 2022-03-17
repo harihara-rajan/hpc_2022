@@ -62,14 +62,14 @@ int main ( int argc, char *argv[] )
     float sum = 0;                  // l1 norm
     float sum_chunks=0;             // l1 norm of each chunk 
 
-    float l2_norm = 0;
-    float l2_norm_sub = 0;
+    double l2_norm = 0;
+    double l2_norm_sub = 0;
 
     int end_process = (n_actual / chunks) ; 
     int rows_end_process = n_actual % chunks;
 
-    float rayleigh_quotient;        
-    float rayleigh_quotient_sub;
+    double rayleigh_quotient;        
+    double rayleigh_quotient_sub;
 
 
     /*Initialising L matrix parallely*/
@@ -446,13 +446,18 @@ int main ( int argc, char *argv[] )
         rayleigh_quotient_sub += res[i] * vect_sub[i];
         l2_norm_sub += res[i] * res[i];
     }
-    MPI_Allreduce(& rayleigh_quotient_sub, & rayleigh_quotient, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(& l2_norm_sub, & l2_norm, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+
+    if (rank==0)
+    {
+        cout << rayleigh_quotient_sub << endl;
+    }
+    MPI_Allreduce(& rayleigh_quotient_sub, & rayleigh_quotient, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(& l2_norm_sub, & l2_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     if (rank ==0)
     {
-        cout << "Rayleigh Quotient = " << rayleigh_quotient << endl;
-        cout << l2_norm << endl;
+        cout << "Rayleigh Quotient = " << rayleigh_quotient/l2_norm << endl;
+        // cout << l2_norm << endl;
     }
 
 
