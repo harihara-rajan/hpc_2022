@@ -9,7 +9,6 @@ int main ( int argc, char *argv[] )
 {
 	time_t walltime = time(nullptr);
     // srand(time(NULL));
-
     int n_actual = 5;
     int i, j, rank, size, n;
     MPI_Init(&argc, &argv);
@@ -57,14 +56,21 @@ int main ( int argc, char *argv[] )
     float res[n]={0};               // rank vector
     float res_sub[chunks] = {0};    // rank vector sub for scatter and gather operations 
 
-    float vect[n] = {0};
-    float vect_sub [chunks] = {0};
+    float vect[n] = {0};            // used with in the power iteration 
+    float vect_sub [chunks] = {0};  // used with in the power iteration
 
-    float sum = 0;                 // l1 norm
-    float sum_chunks=0;            // l1 norm of each chunk 
+    float sum = 0;                  // l1 norm
+    float sum_chunks=0;             // l1 norm of each chunk 
+
+    float l2_norm = 0;
+    float l2_norm_sub = 0;
 
     int end_process = (n_actual / chunks) ; 
     int rows_end_process = n_actual % chunks;
+
+    float rayleigh_quotient;        
+    float rayleigh_quotient_sub;
+
 
     /*Initialising L matrix parallely*/
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
@@ -229,9 +235,9 @@ int main ( int argc, char *argv[] )
     MPI_Gather(&ed_matrix_sub, chunks*n, MPI_INT, ed_matrix, n*chunks, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&ed_matrix, n*n, MPI_INT, 0, MPI_COMM_WORLD); */
 
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n_actual; i++)
     {
-        for (int j = 0; j < n; j++)
+        for (int j = 0; j < n_actual; j++)
         {
             ed_matrix[i][j] = (1/float(n_actual)) * (e[i] * d [j]); // performing outer product (serial programing)
         }
@@ -317,9 +323,9 @@ int main ( int argc, char *argv[] )
     if (rank==0) // printing P matrix into the console.
     {
         cout << "P Matrix"<< endl;
-        for (i=0; i<n_actual; i++)
+        for (i=0; i<n; i++)
         {
-            for (j=0; j<n_actual; j++)
+            for (j=0; j<n; j++)
             {
                 cout << P[i][j] <<  "  ";
             }
@@ -370,7 +376,11 @@ int main ( int argc, char *argv[] )
         MPI_Gather(&vect_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
         
         MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD);
-        
+        /*
+        Compute L1 norm of res vector (rank vector). chunks element of rank vector is scattered into 
+        res_sub and sum of chunks element is captured in sum_chunks. later sum_chunks of every process 
+        is summed together using allreduce which is then broadcasted to all other processes.   
+        */
         for (int j=0; j<chunks;j++)
         {
             sum_chunks += res_sub[j];
@@ -379,22 +389,72 @@ int main ( int argc, char *argv[] )
         MPI_Allreduce(&sum_chunks, & sum, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
 
         MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD);
+        /*
+        Normalising the res vector (rank vector) refer equation 2 in line number 356. 
+        for normalising the rank vector, chunks element of res vector is scattered to res_sub vector 
+        and every element of chunks is divided by the l1 norm (sum) and finally using gather operation 
+        res_sub vector is assembled to res vector which is the res vector (rank vector) for the next 
+        iteration.
+        */
         for (int i=0; i<chunks; i++)
         {
             res_sub[i] = res_sub[i]/sum;
         }
         MPI_Gather(&res_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
     } // end of power Iteration
-
+    
     if (rank ==0) // printing rank vector to the console
     {
         cout << "Rank vector" << endl;
-        for (int j=0; j<n_actual;j++)
+        for (int j=0; j<n;j++)
         {
             cout << res[j] << " "; 
         }
         cout << endl;
     }
+    MPI_Bcast(&res, n, MPI_INT, 0, MPI_COMM_WORLD); 
+    
+    /* Rayleigh-Quotient parallel*/
+    MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD );
+    MPI_Scatter(vect, chunks, MPI_FLOAT, vect_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
+
+    for (int i=0; i<chunks; i++)
+        {
+            for (int j=0; j<n_actual;j++)
+            {
+                vect_sub[i] += P_sub[i][j] * res[j]; // res --> rank vector
+            }
+        }
+        
+    MPI_Gather(&vect_sub, chunks, MPI_FLOAT, vect, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
+
+    if (rank ==0)
+    {
+        cout << "P times vector = " << endl;
+        for (i=0; i<n ; i++)
+        {
+            cout << vect[i] << "  ";
+        }
+        cout << endl;
+    }
+
+    MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Scatter(vect, chunks, MPI_FLOAT, vect_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
+
+    for(i=0; i<chunks; i++)
+    {
+        rayleigh_quotient_sub += res[i] * vect_sub[i];
+        l2_norm_sub += res[i] * res[i];
+    }
+    MPI_Allreduce(& rayleigh_quotient_sub, & rayleigh_quotient, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(& l2_norm_sub, & l2_norm, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
+
+    if (rank ==0)
+    {
+        cout << "Rayleigh Quotient = " << rayleigh_quotient << endl;
+        cout << l2_norm << endl;
+    }
+
 
     MPI_Finalize();
 
