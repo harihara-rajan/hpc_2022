@@ -314,7 +314,7 @@ int main ( int argc, char *argv[] )
     }
     MPI_Gather(&P_sub, chunks*n, MPI_FLOAT, P, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-    if (rank==0)
+    if (rank==0) // printing P matrix into the console.
     {
         cout << "P Matrix"<< endl;
         for (i=0; i<n_actual; i++)
@@ -341,18 +341,29 @@ int main ( int argc, char *argv[] )
         }
     }
 
-    /* POWER ITERATION */
+    /* Start of power iteration */
     for (int k=0; k< num_power_iteration; k++)
     {
+        /*
+        for k = 1,2,. . . until convergence do
+            q(k) = P r(k−1)             ------------ 1
+            r(k) = q(k)/||q(k)||        ------------ 2
+        end
+        */
         sum_chunks = 0;
         MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD );
         MPI_Scatter(vect, chunks, MPI_FLOAT, vect_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
-
-        for (int i=0; i<chunks; i++) // 1 should be replaced with chunks in original programming
+        /*
+        Matrix vecor multiplication of P matrix and r vector parallely. P matrix of shape [n][n] is 
+        scattered to P_sub of shape [chunks][n]. every chunks of matrix multiplication is captured in 
+        vect_sub vector. At the end using gather operation, vect_sub of every process is assembled into
+        res vector. for every new iteration P_sub matrix is multiplied with new set of rank vector
+        */
+        for (int i=0; i<chunks; i++)
         {
             for (int j=0; j<n_actual;j++)
             {
-                vect_sub[i] += P_sub[i][j] * res[j];
+                vect_sub[i] += P_sub[i][j] * res[j]; // res --> rank vector
             }
         }
         
@@ -373,11 +384,11 @@ int main ( int argc, char *argv[] )
             res_sub[i] = res_sub[i]/sum;
         }
         MPI_Gather(&res_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
-    }
+    } // end of power Iteration
 
-    if (rank ==0)
+    if (rank ==0) // printing rank vector to the console
     {
-        cout << "R vector" << endl;
+        cout << "Rank vector" << endl;
         for (int j=0; j<n_actual;j++)
         {
             cout << res[j] << " "; 
