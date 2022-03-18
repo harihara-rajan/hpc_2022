@@ -414,10 +414,18 @@ int main ( int argc, char *argv[] )
     }
     MPI_Bcast(&res, n, MPI_INT, 0, MPI_COMM_WORLD); 
     
-    /* Rayleigh-Quotient parallel*/
+    /* Rayleigh-Quotient parallel implementation*/
     MPI_Scatter(P, chunks*n, MPI_FLOAT, P_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD );
     MPI_Scatter(vect, chunks, MPI_FLOAT, vect_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
-
+    /*
+    Eigen value that coresponds to the eigen vector canbe approximated by the Rayleigh Quotient.
+         (res dot P x res) --> read as "dot product between res (rank vector) and  result of matrix vector 
+    RQ = --------------------   multiplcation of P and res"
+            res * res
+    to compute RQ, P matrix of shape [n][n] is scattered to P_sub into different processes where in each process 
+    matrix vector multiplication is carried out and result is captured in vect_sub. The result of matrix vector 
+    multiplication from different process is gathered finally into vect (P x res) --> read P cross res.
+    */
     for (int i=0; i<chunks; i++)
         {
             for (int j=0; j<n_actual;j++)
@@ -428,19 +436,15 @@ int main ( int argc, char *argv[] )
         
     MPI_Gather(&vect_sub, chunks, MPI_FLOAT, vect, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
 
-    if (rank ==0)
-    {
-        cout << "P times vector = " << endl;
-        for (i=0; i<n ; i++)
-        {
-            cout << vect[i] << "  ";
-        }
-        cout << endl;
-    }
-
     MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Scatter(vect, chunks, MPI_FLOAT, vect_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
-
+    /*
+    To compute the numerator of RQ, dot product between res and vect has to be carried out.For which 
+    res and vect is scattered into different processes and within each process, dot product between
+    chunks element of res and vect is computed and summed. Finally by using Allreduce chunks of sum is
+    again summed, send to receive buffer (rayleigh_quotient_num) and then finally broadcasted to all other
+    processes
+    */
     for(i=0; i<chunks; i++)
     {
         rayleigh_quotient_sub_num += res_sub[i] * vect_sub[i];
