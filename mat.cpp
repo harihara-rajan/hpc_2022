@@ -62,14 +62,14 @@ int main ( int argc, char *argv[] )
     float sum = 0;                  // l1 norm
     float sum_chunks=0;             // l1 norm of each chunk 
 
-    double l2_norm = 0;
-    double l2_norm_sub = 0;
+    double rayleigh_quotient_den ;  // variable to store denominator of rayleigh quotient
+    double rayleigh_quotient_sub_den; // for scatter and gather operation.
 
     int end_process = (n_actual / chunks) ; 
     int rows_end_process = n_actual % chunks;
 
-    double rayleigh_quotient;        
-    double rayleigh_quotient_sub;
+    double rayleigh_quotient_num;   // variable to store numerator of rayleigh quotient     
+    double rayleigh_quotient_sub_num; // for scatter and gather operation
 
 
     /*Initialising L matrix parallely*/
@@ -443,21 +443,16 @@ int main ( int argc, char *argv[] )
 
     for(i=0; i<chunks; i++)
     {
-        rayleigh_quotient_sub += res[i] * vect_sub[i];
-        l2_norm_sub += res[i] * res[i];
+        rayleigh_quotient_sub_num += res_sub[i] * vect_sub[i];
+        rayleigh_quotient_sub_den += res_sub[i] * res_sub[i];
     }
-
-    if (rank==0)
-    {
-        cout << rayleigh_quotient_sub << endl;
-    }
-    MPI_Allreduce(& rayleigh_quotient_sub, & rayleigh_quotient, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-    MPI_Allreduce(& l2_norm_sub, & l2_norm, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    
+    MPI_Allreduce(& rayleigh_quotient_sub_num, & rayleigh_quotient_num, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(& rayleigh_quotient_sub_den, & rayleigh_quotient_den, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
 
     if (rank ==0)
     {
-        cout << "Rayleigh Quotient = " << rayleigh_quotient/l2_norm << endl;
-        // cout << l2_norm << endl;
+        cout << "Rayleigh Quotient" << rayleigh_quotient_num/rayleigh_quotient_den << endl;
     }
 
 
