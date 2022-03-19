@@ -7,14 +7,13 @@ using namespace std;
 
 int main ( int argc, char *argv[] )
 {
-	time_t walltime = time(nullptr);
-    // srand(time(NULL));
     int n_actual = 5;
     int i, j, rank, size, n;
+    double start_time, end_time;
     MPI_Init(&argc, &argv);
+    start_time = MPI_Wtime();
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
     // condition to check if number of webpages is exactly divisibly by size
     int rem = n_actual%size;
     if (rem!=0)
@@ -107,6 +106,7 @@ int main ( int argc, char *argv[] )
     }
     /*Gather operation collects L_Sub from every processes and assemble it to L matrix*/
     MPI_Gather(L_sub,chunks*n, MPI_INT, L, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+/*
 
     if (rank == 0) // Printing L matrix into the console.
     {
@@ -121,6 +121,7 @@ int main ( int argc, char *argv[] )
         }
     cout << endl;
     }
+*/
 
     // computing n vectors parallely 
     MPI_Scatter(L, n*chunks, MPI_INT, L_sub, n*chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -140,6 +141,7 @@ int main ( int argc, char *argv[] )
     finally broadcast it to all other processes.
     */
     MPI_Allreduce(& n_links, n_links_total, n, MPI_INT, MPI_SUM, MPI_COMM_WORLD );
+/*
 
     if (rank==0) // printing n_links that represents connection from j'th webpage to i'th webpage
     {
@@ -150,6 +152,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
+*/
     /* Initialize e parallely*/
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
     /*
@@ -164,7 +167,7 @@ int main ( int argc, char *argv[] )
     Gather operation collects e_sub from all processes and gather it to e vector.
     */
     MPI_Gather(&e_sub, chunks, MPI_INT, e, chunks, MPI_INT, 0, MPI_COMM_WORLD);
-
+/*
     if (rank==0) // printing e vector to the console.
     {
         cout << "e vector " << endl;
@@ -174,6 +177,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
+*/
     /* initialise d vector parallely using gather and scatter*/
     MPI_Scatter(&n_links_total, chunks, MPI_INT, n_links_total_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Scatter(&d, chunks, MPI_INT, d_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -200,7 +204,7 @@ int main ( int argc, char *argv[] )
     MPI_Gather(& d_sub, chunks, MPI_INT, d, chunks, MPI_INT, 0, MPI_COMM_WORLD);
     MPI_Bcast(&d, n, MPI_INT, 0, MPI_COMM_WORLD); 
 
-
+/*
     if (rank==0) // printing d vector to console 
     {
         cout << "d vector " << endl;
@@ -210,7 +214,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
-
+*./
     /*outer prodct of e and d vector parallel implementation
 
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -244,13 +248,13 @@ int main ( int argc, char *argv[] )
 
     }
     MPI_Bcast(&ed_matrix, n*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
+/*
     if (rank ==0) // printing ed matrix in the console.
     {
         cout << "ed Matrix" << endl;
-        for (i=0; i<n; i++)
+        for (i=0; i<n_actual; i++)
         {
-            for (j=0; j<n; j++)
+            for (j=0; j<n_actual; j++)
             {
                 cout << ed_matrix[i][j] << " " ;
             }
@@ -258,6 +262,7 @@ int main ( int argc, char *argv[] )
         }
     cout << endl;
     }
+*/  
     /* parallelise Q matrix */
     MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
@@ -286,8 +291,8 @@ int main ( int argc, char *argv[] )
 
     MPI_Gather(&Q_sub, chunks*n, MPI_FLOAT, Q, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
 
-
-    if (rank == 0)
+/*
+    if (rank == 0) // printing Q matrix to the console.
     {
         cout << "Q Matrix" << endl;
         for (i=0; i<n_actual; i++)
@@ -319,13 +324,13 @@ int main ( int argc, char *argv[] )
         }
     }
     MPI_Gather(&P_sub, chunks*n, MPI_FLOAT, P, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
+/*
     if (rank==0) // printing P matrix into the console.
     {
         cout << "P Matrix"<< endl;
-        for (i=0; i<n; i++)
+        for (i=0; i<n_actual; i++)
         {
-            for (j=0; j<n; j++)
+            for (j=0; j<n_actual; j++)
             {
                 cout << P[i][j] <<  "  ";
             }
@@ -334,7 +339,7 @@ int main ( int argc, char *argv[] )
     cout << endl;
     }
 
-    // initialising rank vector (serial programming)
+    initialising rank vector (serial programming)*/
     for(i=0; i<n; i++)
     {
         if (i<n_actual)
@@ -403,14 +408,15 @@ int main ( int argc, char *argv[] )
         MPI_Gather(&res_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
     } // end of power Iteration
     
-    if (rank ==0) // printing rank vector to the console
+    if (rank ==0 and n_actual <=10) // printing rank vector to the console
     {
-        cout << "Rank vector" << endl;
-        for (int j=0; j<n;j++)
+        cout << endl;
+        cout << "Rank vector : [ ";
+        for (int j=0; j<n_actual;j++)
         {
             cout << res[j] << " "; 
         }
-        cout << endl;
+        cout << "]"<<endl;
     }
     MPI_Bcast(&res, n, MPI_INT, 0, MPI_COMM_WORLD); 
     
@@ -453,10 +459,14 @@ int main ( int argc, char *argv[] )
     
     MPI_Allreduce(& rayleigh_quotient_sub_num, & rayleigh_quotient_num, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(& rayleigh_quotient_sub_den, & rayleigh_quotient_den, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-
+    end_time = MPI_Wtime();
     if (rank ==0)
     {
-        cout << "Rayleigh Quotient" << rayleigh_quotient_num/rayleigh_quotient_den << endl;
+        cout << endl;
+        cout << "Rayleigh Quotient = " << rayleigh_quotient_num/rayleigh_quotient_den << endl;
+        cout << endl;
+        cout << "Total time to compute rank for " << n_actual << " web-pages using " << size << " processes is " << end_time-start_time << " seconds." << endl;
+        cout << endl;
     }
 
 
