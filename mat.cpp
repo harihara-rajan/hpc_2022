@@ -7,7 +7,8 @@ using namespace std;
 
 int main ( int argc, char *argv[] )
 {
-    int n_actual = 5;
+    int n_actual = 6; 
+    int test_case = 1; // when n_actual = 6 && test cases is flagged as 1 test case given in the document will be considered 
     int i, j, rank, size, n;
     double start_time, end_time;
     MPI_Init(&argc, &argv);
@@ -72,48 +73,74 @@ int main ( int argc, char *argv[] )
 
 
     /*Initialising L matrix parallely*/
-    MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
-    /*
-    Scatter L matrix of shape [n][n] into L_sub of shape [chunks][n] to different processes 
-    and initialise with random number (0 or 1) parallely and assemble the matrix together into
-    L matrix using Gather operation
-    */
-    for (int i=0; i<chunks; i++)
+    if (n_actual == 6 and test_case ==1)
     {
-        for (int j=0; j<n; j++)
+        for (i=0; i<n; i++)
         {
-            if (rank ==0)
+            for(j=0;j<n;j++)
             {
-                L_sub[i][j] = rand() %2;
-            }
-            else
-            {
-                if (rank==end_process && n!= n_actual && i>= rows_end_process)
-                {
-                    L_sub[i][j] = 0;
-                }
-                else if (rank > end_process)
-                {
-                    L_sub[i][j] = 0;
-                } 
-                else
-                {
-                    L_sub[i][j] = rand() % 2;
-                }
-
+                L[i][j] = 0;
             }
         }
+        L[0][1]=1;
+        L[1][0]=1;
+        L[2][1]=1;
+        L[2][4]=1;
+        L[2][5]=1;
+        L[3][0]=1;
+        L[3][4]=1;
+        L[4][0]=1;
+        L[4][1]=1;
+        L[4][5]=1;
+        L[5][2]=1;
+        L[5][4]=1;
     }
-    /*Gather operation collects L_Sub from every processes and assemble it to L matrix*/
-    MPI_Gather(L_sub,chunks*n, MPI_INT, L, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
-/*
+    else
+    {
+        cout << "inside else" << endl;
+        MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+        /*
+        Scatter L matrix of shape [n][n] into L_sub of shape [chunks][n] to different processes 
+        and initialise with random number (0 or 1) parallely and assemble the matrix together into
+        L matrix using Gather operation
+        */
+        for (int i=0; i<chunks; i++)
+        {
+            for (int j=0; j<n; j++)
+            {
+                if (rank ==0)
+                {
+                    L_sub[i][j] = rand() %2;
+                }
+                else
+                {
+                    if (rank==end_process && n!= n_actual && i>= rows_end_process)
+                    {
+                        L_sub[i][j] = 0;
+                    }
+                    else if (rank > end_process)
+                    {
+                        L_sub[i][j] = 0;
+                    } 
+                    else
+                    {
+                        L_sub[i][j] = rand() % 2;
+                    }
 
+                }
+            }
+        }
+        /*Gather operation collects L_Sub from every processes and assemble it to L matrix*/
+        MPI_Gather(L_sub,chunks*n, MPI_INT, L, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
+    }
+
+/*
     if (rank == 0) // Printing L matrix into the console.
     {
         cout << "L Matrix " << endl;
-        for (int i=0; i<n_actual; i++)
+        for (int i=0; i<n; i++)
         {
-            for (int j=0; j<n_actual; j++)
+            for (int j=0; j<n; j++)
             {   
                 cout<< L[i][j] << " " ;
             }
@@ -214,7 +241,7 @@ int main ( int argc, char *argv[] )
         }
         cout << endl;
     }
-*./
+*/
     /*outer prodct of e and d vector parallel implementation
 
     MPI_Scatter(e, chunks, MPI_INT, e_sub, chunks, MPI_INT, 0, MPI_COMM_WORLD);
@@ -252,17 +279,17 @@ int main ( int argc, char *argv[] )
     if (rank ==0) // printing ed matrix in the console.
     {
         cout << "ed Matrix" << endl;
-        for (i=0; i<n_actual; i++)
+        for (i=0; i<n; i++)
         {
-            for (j=0; j<n_actual; j++)
+            for (j=0; j<n; j++)
             {
-                cout << ed_matrix[i][j] << " " ;
+                cout << ed_matrix[i][j] << "         " ;
             }
             cout << endl;
         }
     cout << endl;
     }
-*/  
+*/
     /* parallelise Q matrix */
     MPI_Scatter(Q, chunks*n, MPI_FLOAT, Q_sub, chunks*n, MPI_FLOAT, 0, MPI_COMM_WORLD);
     MPI_Scatter(L, chunks*n, MPI_INT, L_sub, chunks*n, MPI_INT, 0, MPI_COMM_WORLD);
@@ -295,11 +322,11 @@ int main ( int argc, char *argv[] )
     if (rank == 0) // printing Q matrix to the console.
     {
         cout << "Q Matrix" << endl;
-        for (i=0; i<n_actual; i++)
+        for (i=0; i<n; i++)
         {
-            for (j=0; j<n_actual; j++)
+            for (j=0; j<n; j++)
             {
-                cout << Q[i][j] << " ";
+                cout << Q[i][j] << "        ";
             }
             cout << endl;
         }
@@ -328,18 +355,18 @@ int main ( int argc, char *argv[] )
     if (rank==0) // printing P matrix into the console.
     {
         cout << "P Matrix"<< endl;
-        for (i=0; i<n_actual; i++)
+        for (i=0; i<n; i++)
         {
-            for (j=0; j<n_actual; j++)
+            for (j=0; j<n; j++)
             {
-                cout << P[i][j] <<  "  ";
+                cout << P[i][j] <<  "       ";
             }
             cout << endl;
         }
     cout << endl;
     }
-
-    initialising rank vector (serial programming)*/
+*/
+    /*initialising rank vector (serial programming)*/
     for(i=0; i<n; i++)
     {
         if (i<n_actual)
@@ -372,12 +399,12 @@ int main ( int argc, char *argv[] )
         */
         for (int i=0; i<chunks; i++)
         {
-            for (int j=0; j<n_actual;j++)
-            {
+            for (int j=0; j<n;j++)
+            {   
                 vect_sub[i] += P_sub[i][j] * res[j]; // res --> rank vector
             }
         }
-        
+    
         MPI_Gather(&vect_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
         
         MPI_Scatter(res, chunks, MPI_FLOAT, res_sub, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD);
@@ -406,7 +433,10 @@ int main ( int argc, char *argv[] )
             res_sub[i] = res_sub[i]/sum;
         }
         MPI_Gather(&res_sub, chunks, MPI_FLOAT, res, chunks, MPI_FLOAT, 0, MPI_COMM_WORLD );
-    } // end of power Iteration
+        MPI_Bcast(&res, n, MPI_INT, 0, MPI_COMM_WORLD); 
+
+    } 
+    // end of power Iteration
     
     if (rank ==0 and n_actual <=10) // printing rank vector to the console
     {
