@@ -1,8 +1,12 @@
+/*
+author: Hari 
+email : harihararajanrm.cms@gmail.com
+file created on 05/03/2022
+Introduction to High Performance Computing and Optimisation
+*/
 #include <iostream>
 #include <mpi.h>
 #include <stdio.h>
-#include <vector>
-#include <time.h>
 using namespace std; 
 
 int main ( int argc, char *argv[] )
