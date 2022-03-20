@@ -13,9 +13,9 @@ vector<float> f_power_iteration(vector<vector<float>>P_matrix, vector<float> r, 
 float f_compute_l1_norm(vector<float> q);
 vector<float> f_vector_normalising(vector<float>q, float l1_norm);
 
-int main()
+int main(int argc, char *argv [])
 {
-    int n = 10;
+    int n = 12;
     int num_power_iteration = 30;
     vector<vector<int>> matrix(n, vector<int>(n)); // matrix 
     vector<vector<float>> Q(n, vector<float>(n));
@@ -34,7 +34,7 @@ int main()
         }
         r[i] =((double) rand() / (RAND_MAX)) ;
     }
-    // matrix = {{0,1,0},{1,0,0},{0,1,0}};
+    // matrix = {{0,1,0,0,0,0},{1,0,0,0,0,0},{0,1,0,0,1,1},{}};
     n_links = f_get_n_links(n_links, matrix, n);
     Q = f_compute_Q_matrix(matrix, Q, n_links);
 
